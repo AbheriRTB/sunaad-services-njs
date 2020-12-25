@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<h2>Database Results</h2>
+
+<ul>
+    <% results.forEach(function(r) { %>
+        <li>id:<%= r.id %></li>
+		  <li>title:<%= r.title %></li>
+		  <li><%= r.event_type %></li>
+		  <li><%= r.description %></li>
+		  <li><%= r.entry_fee %></li>
+		  <li><%= r.website %></li>
+		  <li><%= r.event_date %></li>
+		  <li><%= r.place %></li>
+		  <li><%= r.organizer %></li>
+		  <li><%= r.artiste %></li>
+		  <li><%= r.accompanists %></li>
+		  <li><%= r.phone %></li>
+		  <li><%= r.event_start %></li>
+		  <li><%= r.event_end %></li>
+		  <li><%= r.duration %></li>
+		  <li><%= r.location_address1 %></li>
+		  <li><%= r.location_address2 %></li>
+		  <li><%= r.location_city %></li>
+		  <li><%= r.location_state %></li>
+		  <li><%= r.location_country %></li>
+		  <li><%= r.location_pincode %></li>
+		  <li><%= r.location_mapcoords %></li>
+		  <li><%= r.location_parking %></li>
+		  <li><%= r.location_eataries %></li>
+		  <li><%= r.artiste_image %></li>
+		  <li><%= r.is_featured %></li>
+		  <li><%= r.splash_url %></li>
+		  <li><%= r.is_published %></li>
+    <% }); %>
+</ul>
+
+</div>
+
+</body>
+</html>
