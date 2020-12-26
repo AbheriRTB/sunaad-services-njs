@@ -1,5 +1,6 @@
 var cool = require('cool-ascii-faces');
 var express = require('express');
+var cors = require('cors');
 var bodyParser = require('body-parser');
 var app = express();
 var test = require('./test');
@@ -21,7 +22,54 @@ var layamsubscription = require('./layamservices/subscription');
 
 
 
-var pg=require('pg');
+
+// hard coded configuration object for cors
+conf = {
+    // look for PORT environment variable,
+    // else look for CLI argument,
+    // else use hard coded value for port 8080
+    port: process.env.PORT || process.argv[2] || 5000,
+ 
+    // origin undefined handler
+    // see https://github.com/expressjs/cors/issues/71
+    originUndefined: function (req, res, next) {
+ 
+        if (!req.headers.origin) {
+            res.json({
+                mess: 'Hi you are visiting the service locally. If this was a CORS the origin header should not be undefined'
+            });
+        } else {
+            next();
+        }
+    },
+ 
+    // Cross Origin Resource Sharing Options
+    cors: {
+        // origin handler
+        origin: function (origin, cb) {
+ 
+            // setup a white list
+            let wl = ['https://sunaad.herokuapp.com'];
+
+	   console.log("origin: " + origin);
+	   console.log("wl: " + wl[0]);
+ 
+            if (wl.indexOf(origin) != -1) {
+                cb(null, true);
+            } else {
+                cb(new Error('invalid origin: ' + origin), false);
+            }
+        },
+        optionsSuccessStatus: 200
+    }
+};
+
+ 
+// use origin undefined handler, then cors for all paths
+//app.use(conf.originUndefined, cors(conf.cors))  //Uncomment this line to use the configured CORS like whitelisting
+app.use(cors());  //Enable CORS for all requests
+
+
 
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
@@ -59,10 +107,11 @@ app.get('/getPrograms', function (request, response) {
   }
 
   process.stdout.write("*** debug=" + debug);
+  console.log("*** debug=" + debug);
   var pl = new prglist();
   pl.getProgramList(function(ret){
   		var retval = "" + ret;
-  		process.stdout.write("******" + retval);
+  		//process.stdout.write("******" + retval);
 
   		response.writeHead(200, {'Content-Type':'application/json'});
   		response.write(retval);

@@ -7,7 +7,7 @@ module.exports = class artistelist{
 		self=this;
 	}
 
-	getArtisteList(callback, isDebug){
+	getArtisteListOld(callback, isDebug){
 	  var retval = pg.connect(process.env.DATABASE_URL, function(err, client, done) {
 	    var query='SELECT * FROM artiste_view';
 		 if(!isDebug){
@@ -29,6 +29,42 @@ module.exports = class artistelist{
 	  });
 	}
 
+
+	getArtisteList(callback, isDebug) {
+		var query = 'SELECT * FROM artiste_view';
+		if (!isDebug) {
+			query = query + " where artiste_is_published='Yes'";
+		}
+		var ut = new myutil();
+		const client = ut.getDBClient();
+
+		console.log("Connecting to DB ->" + client);
+		client.connect(cerr => {
+			if (cerr) {
+				console.log('connection error', cerr.stack);
+				throw cerr;
+			}
+			console.log('**** connected');
+			console.log("Query: " + query);
+			client.query(query, (err, res) => {
+				if (err) {
+					throw err;
+				}
+				client.end();
+
+				process.stdout.write("Inside getAristeList");
+				var result = self.getAristeListJSON(res);
+				process.stdout.write("returning:\n" + result);
+
+				console.log("Calling callback: " + callback);
+				callback(result);
+			});
+
+		});
+
+	}
+
+	
 
 
 	getAristeListJSON(result){

@@ -1,64 +1,107 @@
-var pg = require('pg');
 var myutil = require('./myutil');
 var self;
+const { response } = require('express');
 
-module.exports = class prglist{
-	constructor(){
-		self=this;
+module.exports = class prglist {
+	constructor() {
+		console.log("in getPrograms Constructor");
+		self = this;
 	}
 
-	getProgramListOld(callback){
-	  var retval = pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-	    var query='SELECT * FROM program_view';
-	    return client.query(query, function(err, result) {
-	      done();
-	      if (err) { 
-				console.error(err); response.send("Error " + err); 
+	getProgramListOld(callback) {
+		var retval = pg.connect(process.env.DATABASE_URL, function (err, client, done) {
+			var query = 'SELECT * FROM program_view';
+			return client.query(query, function (err, result) {
+				done();
+				if (err) {
+					console.error(err);
+					response.send("Error " + err);
+				}
+				else {
+					process.stdout.write("Inside getProgramList");
+					console.log("Inside getProgramList");
+					var res = self.getProgramListJSON(result);
+					process.stdout.write("returning:\n" + res);
+
+					callback(res);
+				}
+			});
+		});
+	}
+
+	getProgramList1(callback, isDebug) {
+		console.log("Trying Connection : " + process.env.DATABASE_URL);
+		var retval = pg.connect(process.env.DATABASE_URL, function (err, client, done) {
+			var query = 'SELECT * FROM program_view';
+			console.log("Connection done: " + process.env.DATABASE_URL);
+			if (!isDebug) {
+				query = query + " where event_date_org > (now() - '5 day'::INTERVAL)";
 			}
-	      else{ 
+			return client.query(query, function (err, result) {
+				done();
+				if (err) {
+					console.log("error connecting to DB");
+					console.error(err); response.send("Error " + err);
+				}
+				else {
+					process.stdout.write("Inside getProgramList");
+					var res = self.getProgramListJSON(result);
+					process.stdout.write("returning:\n" + res);
+
+					callback(res);
+				}
+			});
+		});
+	}
+
+	getProgramList(callback, isDebug) {
+		//console.log("Trying Connection : " + process.env.DATABASE_URL);
+		var query = 'SELECT * FROM program_view';
+		if (!isDebug) {
+			query = query + " where event_date_org > (now() - '5 day'::INTERVAL)";
+		}
+
+		var ut = new myutil();
+		const client = ut.getDBClient();
+
+		console.log("Connecting to DB ->" + client);
+		client.connect(cerr => {
+			if (cerr) {
+				console.log('connection error', cerr.stack);
+				throw cerr;
+			}
+			console.log('**** connected');
+			console.log("Query: " + query);
+			client.query(query, (err, res) => {
+				if (err) {
+					throw err;
+				}
+				client.end();
+
+				//console.log("got Result:" + res);
 				process.stdout.write("Inside getProgramList");
-				var res = self.getProgramListJSON(result);
-				process.stdout.write("returning:\n"+res);
+				var result = self.getProgramListJSON(res);
+				//process.stdout.write("returning:\n" + result);
 
-	  			callback(res);
-			}
-	    });
-	  });
-	}
+				console.log("Calling callback: " + callback);
+				callback(result);
+			});
 
-	getProgramList(callback, isDebug){
-	  var retval = pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-	    var query='SELECT * FROM program_view';
-		 if(!isDebug){
-		 	  query=query + " where event_date_org > (now() - '5 day'::INTERVAL)";
-		 }
-	    return client.query(query, function(err, result) {
-	      done();
-	      if (err) { 
-				console.error(err); response.send("Error " + err); 
-			}
-	      else{ 
-				process.stdout.write("Inside getProgramList");
-				var res = self.getProgramListJSON(result);
-				process.stdout.write("returning:\n"+res);
-
-	  			callback(res);
-			}
-	    });
-	  });
+		});
 	}
 
 
-	getProgramListJSON(result){
+	getProgramListJSON(result) {
 
+		console.log("Inside getProgramListJSON");
 		process.stdout.write("Inside getProgramListJSON");
 		var ut = new myutil();
-		var plist="";
+		var plist = "";
 
 		plist += "[";
 
-		for(var i=0; i<result.rows.length; ++i){
-			var r=result.rows[i];
+		for (var i = 0; i < result.rows.length; ++i) {
+			var r = result.rows[i];
 
 			plist += "{\n";
 
@@ -94,7 +137,7 @@ module.exports = class prglist{
 			plist += ut.addFieldToJSON("is_published", r.is_published, 'true');
 
 			plist += "}";
-			if(i<result.rows.length-1){
+			if (i < result.rows.length - 1) {
 				plist += ",\n";
 			}
 		}
@@ -106,16 +149,16 @@ module.exports = class prglist{
 		return plist;
 	}
 
-	getProgramListJSON_old(result){
+	getProgramListJSON_old(result) {
 
 		process.stdout.write("Inside getProgramListJSON");
 		var ut = new myutil();
-		var plist="";
+		var plist = "";
 
 		plist += "[";
 
-		for(var i=0; i<result.rows.length; ++i){
-			var r=result.rows[i];
+		for (var i = 0; i < result.rows.length; ++i) {
+			var r = result.rows[i];
 
 			plist += "{\n";
 
@@ -150,7 +193,7 @@ module.exports = class prglist{
 			plist += ut.addFieldToJSON("is_published", r.is_published, 'true');
 
 			plist += "}";
-			if(i<result.rows.length-1){
+			if (i < result.rows.length - 1) {
 				plist += ",\n";
 			}
 		}

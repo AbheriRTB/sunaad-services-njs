@@ -7,7 +7,7 @@ module.exports = class venue{
 		self=this;
 	}
 
-	getVenueList(callback, isDebug){
+	getVenueListOld(callback, isDebug){
 	  var retval = pg.connect(process.env.DATABASE_URL, function(err, client, done) {
 	   	var query='SELECT * FROM venue';
 		 	if(!isDebug){
@@ -29,6 +29,38 @@ module.exports = class venue{
 	  });
 	}
 
+	getVenueList(callback, isDebug) {
+		var query = 'SELECT * FROM venue';
+		if (!isDebug) {
+			query = query + " where venue_is_published='Yes'";
+		}
+		var ut = new myutil();
+		const client = ut.getDBClient();
+
+		console.log("Connecting to DB ->" + client);
+		client.connect(cerr => {
+			if (cerr) {
+				console.log('connection error', cerr.stack);
+				throw cerr;
+			}
+			console.log('**** connected');
+			console.log("Query: " + query);
+			client.query(query, (err, res) => {
+				if (err) {
+					throw err;
+				}
+				client.end();
+
+				process.stdout.write("Inside getVenueList");
+				var result = self.getVenueListJSON(res);
+				process.stdout.write("returning:\n" + result);
+
+				console.log("Calling callback: " + callback);
+				callback(result);
+			});
+
+		});
+	}
 
 
 	getVenueListJSON(result){

@@ -7,7 +7,7 @@ module.exports = class organizer{
 		self=this;
 	}
 
-	getOrganizerList(callback, isDebug){
+	getOrganizerListOld(callback, isDebug){
 	  var retval = pg.connect(process.env.DATABASE_URL, function(err, client, done) {
         var query='SELECT * FROM organizer';
  			if(!isDebug){
@@ -27,6 +27,40 @@ module.exports = class organizer{
 			}
 	    });
 	  });
+	}
+
+	getOrganizerList(callback, isDebug) {
+
+		var query = 'SELECT * FROM organizer';
+		if (!isDebug) {
+			query = query + " where organizer_is_published='Yes'";
+		}
+		var ut = new myutil();
+		const client = ut.getDBClient();
+
+		console.log("Connecting to DB ->" + client);
+		client.connect(cerr => {
+			if (cerr) {
+				console.log('connection error', cerr.stack);
+				throw cerr;
+			}
+			console.log('**** connected');
+			console.log("Query: " + query);
+			client.query(query, (err, res) => {
+				if (err) {
+					throw err;
+				}
+				client.end();
+
+				process.stdout.write("Inside getOrganizerList");
+				var result = self.getOrganizerListJSON(res);
+				process.stdout.write("returning:\n" + result);
+
+				console.log("Calling callback: " + callback);
+				callback(result);
+			});
+
+		});
 	}
 
 
